@@ -3,7 +3,6 @@ name: Build and Push Multi-arch Docker Image
 on:
   push:
     branches: [ main, master ]
-    tags: [ 'v*' ]
 
 env:
   IMAGE_NAME: jetbrains-help
@@ -29,20 +28,12 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Extract version from pom.xml
-      run: |
-        echo "VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_ENV
-        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
     - name: Build and push multi-arch Docker image
       uses: docker/build-push-action@v4
       with:
         context: .
         platforms: ${{ env.PLATFORMS }}
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-${{ env.SHORT_SHA }}
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
